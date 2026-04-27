@@ -41,7 +41,7 @@ Posteriormente, se seleccionaron 4 variables acorde a nuestra investigación par
 
 -   **Edad (edad)**: variable de razón utilizada para delimitar la población de estudio en jovenes entre 18 y 29 años.
 
--**Escolaridad (esc → escolaridad)**: variable de nivel de razón, nos permiten identifical la difrencias de nivel educativo entre los/as individuops en relación con su capital.
+\-**Escolaridad (esc → escolaridad)**: variable de nivel de razón, nos permiten identifical la difrencias de nivel educativo entre los/as individuops en relación con su capital.
 
 -   **Sexo (sexo)**: variable nominal que nos permite caracterizar sociodemográficamente a los/as individuos.
 
@@ -177,7 +177,6 @@ tabla_frec_hacina %>%
     position = "center"
   )
 ```
-
 **Interpretación:** Para comenzar, de acuerdo con la tabla de frecuencia que nos permiten describir la distribucción de hacinamiento en jovenes donde se identifican la proporción de los/as individuos en cada categoría, se puede evidenciar que la mayoría de los/as jovenes se ecuentran en condiciones de hacinamiento en un 93,2 % en total. Sin embargo,un 6,3 % presentan codiciones de hacinamiento medio, mientras que una pequeña parte de la población posee una situación de hacinamiento crítico de un 0,5. Esto nos indica que el fenómeno de hacinamiento en Chile a pesar de no ser predominante en los/as jóvenes, existe un grupo que minotario que se evidencia mayores condiciones de precariedad de hacinamiento critico, reflejandonos los hacesos de desigualdades en el acceso de a una vivienda adecuada.
 
 ```{r}
@@ -191,7 +190,6 @@ ggplot(cas_jovenes, aes(x = ingreso)) +
   theme_minimal()
 
 ```
-
 **Interpretación:** En el gráfico se puede interpretar como que el ingreso de la población joven en Chile presenta una distribución altamente asimétrica, con una marcada concentración en los tramos de ingresos bajos. Al aplicar una escala logarítmica (base 10), se logra visibilizar la masa crítica de la muestra que, en una escala lineal, quedaría comprimida debido a la extrema desigualdad de los datos.
 
 Del análisis visual se desprenden los siguientes puntos:
@@ -228,7 +226,6 @@ ggplot(cas_jovenes %>% filter(!is.na(pobreza_cat)),
 **Interpretación:** Para comenzar de acuerdo con el gráfico de distribucción de la pobreza de la población joven, nos evidencia que la mayoria se encuentra en la categoría no pobre, en una a cifra aproximadamente de 2.745.230 personas,sin embargo, se percibe en una situación de pobreza no extrema de 416.336 de personas, mientras que un grupo reducido de 291.387 personas se encuentran en condiciones de pobreza extrema. Evidenciandonos que la mayoría de los/as jovénes se enciuentran en condiciones que no son de pobreza al igual que en las situaciones de hacinamiento, se encuentran la mayoría sin hacinamiento. Pero a pesar, de que la mayoría de los/as jovenes no poseen condiciones de pobreza extrema o hacinamiento crítico, se evidencia un segmento de grupos de la población de jovenes que si poseen condiciones de vulnaberidad ecónomica, sobretodo en la diferencia entre la pobreza extrema y no extrema, que es singnificativa,reflejandonos las distintas desigualdades enfretadas por los/as joves de acuerdo a sus niveles de pobreza como hacinamiento, por lo que deberían requerir de la atención de políticas públicas en particulas los grupos que presentan condiciones de hacinamiento crítico como de pobreza extrema.
 
 ![Muchas gracias por su atención](https://images.meme-arsenal.com/1ed23d9342f711d43936b3854c86d6be.jpg)
-
 
 
 
