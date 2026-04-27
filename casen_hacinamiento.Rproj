@@ -1,0 +1,229 @@
+---
+title: "Desigualdad económica en situaciones de hacinamiento en jóvenes de Chile"
+author: "Krishna Arce y Valentina Sassi"
+date: "2026-03-24"
+format: html
+editor: visual
+toc: true
+embed-resources: true
+theme: darkly
+css: estilos.css
+lang: es
+bibliography: bibliografias.bib
+link-citations: true
+project:
+  output-dir: docs
+---
+
+## Introducción
+
+En chile las desigualdades económicas son una brecha significativa en la calidad de vida en los/as jovenes chilenos, donde la poblaciones más ricas son las más priviligiadas. Según @mieresbrevis2020 desigualdad de Chile es intra e interregional, los ingresos del 20% de la población más rica son 10 veces mayores que los del quintil más pobre (OCDE, 2018), siendo sorprendentemente mayor que el promedio de los países de la OCDE.
+
+Desde una perspectiva historica, se plantea que también los efectos del neoliberalismos han repercutido en desigualdades económicas que afectan a las viviendas, como nos menciona @serey2023 las políticas de vivienda actuales tienen su origen en la introducción del neoliberalismo durante la dictadura militar y se caracterizan por su focalización en los grupos más vulnerables de la población, por la priorización del régimen de propiedad por encima de otros tipos de tenencia y por el subsidio a la demanda.
+
+En este sentido, se plantea la siguiente hipótesis: mientras se produzca un menor ingreso económico en los jóvenes, mayor será el aumento de hacinamiento en sus condiciones habitacionales, ya que los recursos disponibles limitan el acceso a viviendas adecuadas, obligando así a compartir espacios reducidos. Esta situación se relaciona con las desigualdes socioeconómicas estructurales presentes en Chile, las cuales han sido influenciadas por el modelo neoliberalista. Además, factores como el alto costo de la vivienda, lo cual nos hace preguntarnos ¿Cómo influyen los ingresos económicos en las situaciónes de hacinamiento en los jovenes de Chile?
+
+Para esto, definiremos las variables; En primer lugar, la variable independiente está hace referencia hacia los ingresos del hogar, como el total de ingresos percibidos. En segundo lugar, la variable dependiente siendo el hacinamiento crítico, que se refiere según el Censo del año 2024 @presenta2024 , el hacinamiento se produce cuando residen 2,5 personas o más en promedio por dormitorio en una vivienda. El hacinamiento puede clasificarse en hacinamiento medio y hacinamiento crítico.
+
+Para el análisis de datos, se utilizará la base de datos de la Encuesta de Caracterización Socioeconomica Nacional (CASEN) del año 2022, para identificar las brechas de desigualdad en Chile desde una perspectiva cuantitativa en la relación de las variables de los ingresos y condiciones de vivienda.
+
+![Desigualdades sociales en vivienda](https://cronicasdelsur.cl/wp-content/uploads/2023/11/VIVIENDA2.jpg)
+
+## Metodología
+
+En nuestra investigación utilizaremos las base de datos de la Casen del año 2022, que nos permite aproximarnos alnalisis de las condiciones socioeconómicas y codiciones habitacionales de la población chilena.
+
+Para esto, se realizará un análisis mediante los software de RStudio y el uso de Quarto para la elaboración de un reporte dinámico. En primer lugar, se filtrara la población del estudio, considerando únicamente los/as jóvenes entre 18 y 29 años de acuerdo a nuestro objeto de estudio.
+
+Posteriormente, se seleccionaron 4 variables acorde a nuestra investigación para realizar nuestro análisis del problema de investigación:
+
+-   **Ingreso del hogar (ytotcor)**: variable que es de nivel de razón representando los recursos económicos de ingreso en el hogar y actúa como variable independiente.
+
+-   **Edad (edad)**: variable de razón utilizada para delimitar la población de estudio en jovenes entre 18 y 29 años.
+
+\-**Escolaridad (esc → escolaridad)**: variable de nivel de razón, nos permiten identifical la difrencias de nivel educativo entre los/as individuops en relación con su capital.
+
+-   **Sexo (sexo)**: variable nominal que nos permite caracterizar sociodemográficamente a los/as individuos.
+
+-   **Hacinamiento (hacinamiento_cat)**: variable ordinal construida a partir del número de personas en el hogar (numper) y el número de dormitorios (v_27_a), que clasifica las condiciones habitacionales en tres niveles: sin hacinamiento, hacinamiento medio y hacinamiento crítico.
+
+Posteriormente, en el proceso de operacionalización, se realizara una limpieza de datos, con tratamiento de valores perdidos (NA), la recodificación de variables y ordenamiento de categorías.
+
+Para finamente, elaborar tablas descriptivas (medidas de tendencia central) y tablas de frecuencia para variables categóricas, en conjunto con gráficos univariados que nos permiten visualizar la distribución de las variables principales.
+
+## R Analisis de Datos
+
+```{r}
+## preparación de datos
+
+#1. Cargar Paquetes 
+
+#Librerías
+library(tidyverse)
+library(haven)
+library(snakecase)
+library(summarytools)
+library(dplyr)
+library(kableExtra)
+
+# 1.2. Configuración para evitar notación científica
+options(scipen = 999)
+
+# 2. Cargar base de datos
+casen <- read_sav("C:/Users/shirochifuyu/Downloads/casen_2022.sav")
+
+# 3. Limpiar variables
+names(casen) <- make.unique(names(casen))
+
+# 4. Convertir a data.frame
+
+casen <- as.data.frame(casen)
+
+# 5. Filtrar población de jóvenes (18 a 29 años)
+cas_jovenes <- casen %>%
+  filter(edad >= 18 & edad <= 29) %>%
+  # Limpieza de valores perdidos (-88, -99) en variables numéricas
+  mutate(across(where(is.numeric), ~na_if(., -88)),
+         across(where(is.numeric), ~na_if(., -99)))
+
+# 6. Crear variables (operalización)
+
+cas_jovenes <- cas_jovenes %>%
+  mutate(
+    # Ingreso total corregido del hogar
+    ingreso = if_else(ytotcor > 0, ytotcor, NA_real_),
+    
+    # Años de escolaridad 
+    escolaridad = as.numeric(esc),
+    
+    # Cálculo de hacinamiento
+    hacinamiento_ratio = if_else(v27a > 0, numper / v27a, NA_real_), 
+    
+    # Variable categórica nominal: Sexo
+    sexo_cat = factor(sexo, levels = c(1, 2), labels = c("Hombre", "Mujer")),
+    
+    # Índice de hacinamiento ordinal
+    hacinamiento_cat = factor(case_when(
+      hacinamiento_ratio < 2.5 ~ "Sin hacinamiento",
+      hacinamiento_ratio >= 2.5 & hacinamiento_ratio < 5 ~ "Medio",
+      hacinamiento_ratio >= 5 ~ "Crítico"
+    ), levels = c("Sin hacinamiento", "Medio", "Crítico"), ordered = TRUE)
+  )
+# Indice de pobreza
+
+cas_jovenes <- cas_jovenes %>%
+  mutate(
+    pobreza_cat = factor(
+      pobreza,
+      levels = c(1, 2, 3),
+      labels = c("Pobreza Extrema", "Pobreza No Extrema", "No Pobre")
+    )
+  )
+```
+
+```{r}
+
+# 6. Vizualización de los datos
+
+# A. TABLA DESCRIPTIVA: Medidas de tendencia central (Ponderadas por 'expr')
+tabla_central <- cas_jovenes %>%
+  filter(
+    is.finite(hacinamiento_ratio),
+    !is.na(ingreso),
+    !is.na(escolaridad),
+    !is.na(expr)
+  ) %>%
+  reframe(
+    Variable = c("Ingreso Total (ytotcor)", "Años Escolaridad (esc)", "Ratio Hacinamiento"),
+    
+    Media = c(
+      weighted.mean(ingreso, expr, na.rm = TRUE),
+      weighted.mean(escolaridad, expr, na.rm = TRUE),
+      weighted.mean(hacinamiento_ratio, expr, na.rm = TRUE)
+    ),
+    
+    Mediana = c(
+      median(ingreso, na.rm = TRUE),
+      median(escolaridad, na.rm = TRUE),
+      median(hacinamiento_ratio, na.rm = TRUE)
+    )
+  )
+   
+
+```
+
+**Interpretación:** En la tabla descriptiva con las medidas de tendencia central, se pueden interpretar como que, para la población joven de entre 18 y 29 años en Chile, existe una profunda disparidad entre el nivel formativo y la capacidad de generación de ingresos. Mientras que los Años de Escolaridad muestran una media de 13,49 y una mediana de 12, lo que indica que la mayoría de los jóvenes ha superado la educación media y ha accedido a estudios superiores, esto no se refleja proporcionalmente en su realidad económica. En cuanto al Ingreso Total (ytotcor), la tabla revela una brecha crítica: mientras el promedio se sitúa en \$521.635, la mediana en \$400.000. Esta brecha nos indica una asimetría en la distribución del ingreso, los donde valores altos elevan el promedio, evidenciando la desigualdad en los ingresos de los jovenes. Finalmente, respecto al Ratio de Hacinamiento, los valores de la media (1,39) y la mediana (1,33) se mantienen cercanos y por debajo del umbral de 2,5. Esto se puede interpretar como que, en términos generales, la población joven estudiada habita en condiciones de vivienda que no alcanzan niveles de hacinamiento crítico, manteniendo una relación de densidad habitacional estable y dentro de los parámetros de suficiencia según la medición de la encuesta Casen 2022.
+
+```{r}
+# B. TABLA DE FRECUENCIAS (Variables Categóricas)
+
+
+tabla_frec_hacina <- cas_jovenes %>%
+  filter(!is.na(hacinamiento_cat)) %>%
+  count(hacinamiento_cat, wt = expr) %>%
+  mutate(
+    Porcentaje = round(n / sum(n) * 100, 1)
+  )
+
+tabla_frec_hacina %>%
+  kable(
+    digits = 1,
+    caption = "Distribución de Hacinamiento en Jóvenes",
+    col.names = c("Categoría", "Frecuencia", "%"),
+    format.args = list(big.mark = ".", decimal.mark = ",")
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position = "center"
+  )
+```
+**Interpretación:** Para comenzar, de acuerdo con la tabla de frecuencia que nos permiten describir la distribucción de hacinamiento en jovenes donde se identifican la proporción de los/as individuos en cada categoría, se puede evidenciar que la mayoría de los/as jovenes se ecuentran en condiciones de hacinamiento en un 93,2 % en total. Sin embargo,un 6,3 % presentan codiciones de hacinamiento medio, mientras que una pequeña parte de la población posee una situación de hacinamiento crítico de un 0,5. Esto nos indica que el fenómeno de hacinamiento en Chile a pesar de no ser predominante en los/as jóvenes, existe un grupo que minotario que se evidencia mayores condiciones de precariedad de hacinamiento critico, reflejandonos los hacesos de desigualdades en el acceso de a una vivienda adecuada.
+
+```{r}
+
+# C. GRÁFICO 1: Distribución del Ingreso (Univariado)
+ggplot(cas_jovenes, aes(x = ingreso)) +
+  geom_histogram(fill = "#2a9d8f", color = "white", bins = 50) +
+  scale_x_log10(labels = scales::dollar_format(prefix = "$", big.mark = ".")) + # Escala log para visualizar mejor desigualdad
+  labs(title = "Distribución del Ingreso Total en Jóvenes (Escala Log)",
+       x = "Ingreso (log)", y = "Frecuencia") +
+  theme_minimal()
+
+```
+**Interpretación:** En el gráfico se puede interpretar como que el ingreso de la población joven en Chile presenta una distribución altamente asimétrica, con una marcada concentración en los tramos de ingresos bajos. Al aplicar una escala logarítmica (base 10), se logra visibilizar la masa crítica de la muestra que, en una escala lineal, quedaría comprimida debido a la extrema desigualdad de los datos.
+
+Del análisis visual se desprenden los siguientes puntos:
+
+Concentración en la Mediana: El punto de mayor frecuencia (la barra más alta) coincide con el tramo de la mediana de \$120.000. Esto confirma visualmente que la gran mayoría de los jóvenes se sitúa en niveles de ingreso significativamente inferiores al promedio, reflejando una realidad de precariedad o alta dependencia económica.
+
+Brecha de Desigualdad: A pesar de que la escala logarítmica suaviza la curva, se observa una caída drástica en la frecuencia a medida que aumenta el ingreso. Esto demuestra que alcanzar tramos salariales superiores es un fenómeno excepcional y minoritario para las personas de entre 18 y 29 años.
+
+Representatividad: La forma de la distribución valida que el "joven promedio" en Chile habita en hogares con recursos limitados, lo que contrasta con los altos niveles de escolaridad observados en las tablas descriptivas previas.
+
+```{r}
+
+# D. GRÁFICO 2: Distribución de Pobreza (Univariado)
+
+ggplot(cas_jovenes %>% filter(!is.na(pobreza_cat)), 
+       aes(x = pobreza_cat, fill = pobreza_cat)) +
+  geom_bar(aes(weight = expr)) +
+  geom_text(
+    aes(weight = expr, label = after_stat(count)),
+    stat = "count",
+    vjust = -0.5,
+    size = 3
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Distribución de la Pobreza en Población Joven",
+    x = "Condición de Pobreza",
+    y = "Población Estimada"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+**Interpretación:** Para comenzar de acuerdo con el gráfico de distribucción de la pobreza de la población joven, nos evidencia que la mayoria se encuentra en la categoría no pobre, en una a cifra aproximadamente de 2.745.230 personas,sin embargo, se percibe en una situación de pobreza no extrema de 416.336 de personas, mientras que un grupo reducido de 291.387 personas se encuentran en condiciones de pobreza extrema. Evidenciandonos que la mayoría de los/as jovénes se enciuentran en condiciones que no son de pobreza al igual que en las situaciones de hacinamiento, se encuentran la mayoría sin hacinamiento. Pero a pesar, de que la mayoría de los/as jovenes no poseen condiciones de pobreza extrema o hacinamiento crítico, se evidencia un segmento de grupos de la población de jovenes que si poseen condiciones de vulnaberidad ecónomica, sobretodo en la diferencia entre la pobreza extrema y no extrema, que es singnificativa,reflejandonos las distintas desigualdades enfretadas por los/as joves de acuerdo a sus niveles de pobreza como hacinamiento, por lo que deberían requerir de la atención de políticas públicas en particulas los grupos que presentan condiciones de hacinamiento crítico como de pobreza extrema.
+
+![Muchas gracias por su atención](https://images.meme-arsenal.com/1ed23d9342f711d43936b3854c86d6be.jpg)
+
